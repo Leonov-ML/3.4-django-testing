@@ -6,10 +6,10 @@ from rest_framework.reverse import reverse
 from random import randint
 import json
 
-
-# url = '/api/v1/courses/'
 url = reverse("courses-list")
 
+def test_dummy():
+    assert True
 
 @pytest.fixture
 def client():
@@ -31,19 +31,20 @@ def courses_factory():
 
 
 @pytest.mark.django_db
-def test_get_course(client, students_factory, courses_factory):
+def test_filter_course_id(client, students_factory, courses_factory):
     # Arrange
 
     courses = courses_factory(_quantity=20)
 
     # Act
-    response = client.get(f'{url}8/')
+
+    response = client.get(f'{url}?id={courses[0].id}')
 
     # Assert
 
     assert response.status_code == 200
     data = response.json()
-    assert data['id'] == 8
+    assert data[0]['id'] == courses[0].id
 
 
 @pytest.mark.django_db
@@ -65,15 +66,12 @@ def test_get_course_list(client, students_factory, courses_factory):
 
 @pytest.mark.django_db
 def test_get_course_filter_id(client, students_factory, courses_factory):
-
     # Arrange
 
-    id_count = len(Course.objects.all())
-    course_for_test = Course.objects.create(id=id_count + 1, name='name_for_test1')
+    course_for_test = courses_factory(name="name_for_test1")
     courses = courses_factory(_quantity=19)
 
     # Act
-
 
     response = client.get(f'{url}?id={course_for_test.id}')
 
@@ -94,7 +92,7 @@ def test_get_course_filter_name(client, students_factory, courses_factory):
 
     # Act
 
-    response = client.get(f'{url}?name={course_for_test.name}')
+    response = client.get(url, {'name': course_for_test.name})
 
     # Assert
 
@@ -119,8 +117,7 @@ def test_create_course(client, students_factory, courses_factory):
     # Assert
 
     assert response.status_code == 201
-    assert Course.objects.get(name='name_for_test3').name == 'name_for_test3'
-
+    assert response.data['name'] == data['name']
 
 @pytest.mark.django_db
 def test_update_course(client, students_factory, courses_factory):
@@ -141,7 +138,7 @@ def test_update_course(client, students_factory, courses_factory):
 
     assert response.status_code == 200
     assert Course.objects.get(id=courses[0].id).name == data['name']
-
+    assert response.data['name'] == data['name']
 
 @pytest.mark.django_db
 def test_drop_course(client, students_factory, courses_factory):
